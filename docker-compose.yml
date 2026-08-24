@@ -1,0 +1,30 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379
+      WHATSAPP_AUTH_DIR: /app/auth
+      GOOGLE_SERVICE_ACCOUNT_KEY_PATH: /app/google-service-account.json
+    volumes:
+      - ./auth:/app/auth
+      - ./google-service-account.json:/app/google-service-account.json:ro
+
+volumes:
+  redis-data:
