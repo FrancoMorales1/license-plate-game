@@ -38,3 +38,9 @@ Se pueden correr juntos con `pnpm verify`. El mismo chequeo corre en CI
   patente) y le pasa el texto detectado al mismo parser que usa el caption
   (`plateParser.ts:extractPlate`), así que la precisión depende de que la patente sea legible en
   la foto entera.
+- Tope de uso de Vision (`src/whatsapp/visionBudget.ts`, `VISION_MONTHLY_LIMIT`, default 1000):
+  contador propio en Redis (no se consulta la API de uso de Google, que tiene delay y requeriría
+  habilitar Cloud Monitoring) que cuenta llamadas reales a `textDetection`. Al llegar al límite
+  se corta _solo_ el fallback de OCR -las fotos con la patente escrita en el caption siguen
+  funcionando igual, no consumen Vision- y se manda un único aviso al grupo por mes (no uno por
+  cada foto bloqueada). Si se borra el volumen de Redis el contador se resetea.

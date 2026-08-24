@@ -12,6 +12,9 @@ patente ya se había cargado antes.
    el caption y, si no hay nada reconocible ahí, baja la foto y prueba con OCR (Google Cloud
    Vision) sobre la imagen completa. Si ninguno de los dos encuentra una patente, la foto se
    ignora. Después sube la foto a una carpeta de Google Drive.
+   - El OCR tiene un tope mensual propio (`VISION_MONTHLY_LIMIT`, default 1000, la capa gratuita
+     de Vision) contado con un contador persistente en Redis. Al llegarse, se corta solo el OCR
+     -las fotos con la patente en el caption siguen funcionando- y se avisa una vez en el grupo.
 3. Calcula el puntaje comparando contra todo el historial de la hoja **Patentes** (de cualquier
    jugador):
    - Patente nueva (nadie la cargó antes) → **1 punto**.

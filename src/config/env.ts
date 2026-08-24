@@ -13,6 +13,7 @@ const envSchema = z.object({
   GOOGLE_OAUTH_CLIENT_ID: z.string().min(1, 'GOOGLE_OAUTH_CLIENT_ID es requerido'),
   GOOGLE_OAUTH_CLIENT_SECRET: z.string().min(1, 'GOOGLE_OAUTH_CLIENT_SECRET es requerido'),
   GOOGLE_OAUTH_REFRESH_TOKEN: z.string().min(1, 'GOOGLE_OAUTH_REFRESH_TOKEN es requerido'),
+  VISION_MONTHLY_LIMIT: z.coerce.number().positive().default(1000),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
 

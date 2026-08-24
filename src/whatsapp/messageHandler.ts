@@ -3,6 +3,7 @@ import { env } from '../config/env.js';
 import { logger } from '../logger.js';
 import { extractPlate } from './plateParser.js';
 import { extractPlateFromImage } from './plateOcr.js';
+import { hasVisionBudget, claimLimitNotice } from './visionBudget.js';
 import { messageTimestampToIso } from './timestamp.js';
 import { saveMessage } from './messageStore.js';
 import { uploadPhoto } from '../sheets/driveClient.js';
@@ -35,8 +36,20 @@ async function handleUpsert(sock: WASocket, messages: WAMessage[]): Promise<void
     const buffer = await downloadMediaMessage(msg, 'buffer', {});
 
     if (!patente) {
-      patente = await extractPlateFromImage(buffer);
-      source = 'ocr';
+      if (await hasVisionBudget()) {
+        patente = await extractPlateFromImage(buffer);
+        source = 'ocr';
+      } else {
+        logger.warn('Límite mensual de Vision OCR alcanzado, se salta el OCR de esta foto');
+        if (await claimLimitNotice()) {
+          await sock.sendMessage(env.WHATSAPP_GROUP_JID, {
+            text:
+              `⚠️ Se alcanzó el límite mensual gratuito de lectura automática de patentes ` +
+              `(${env.VISION_MONTHLY_LIMIT} fotos). Hasta el mes que viene, escribí la patente ` +
+              `en el mensaje junto con la foto para que se guarde.`,
+          });
+        }
+      }
     }
 
     if (!patente) {

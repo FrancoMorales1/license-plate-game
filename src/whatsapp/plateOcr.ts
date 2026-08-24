@@ -1,6 +1,7 @@
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 import { env } from '../config/env.js';
 import { extractPlate } from './plateParser.js';
+import { recordVisionCall } from './visionBudget.js';
 
 const client = new ImageAnnotatorClient({ keyFilename: env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH });
 
@@ -8,10 +9,12 @@ const client = new ImageAnnotatorClient({ keyFilename: env.GOOGLE_SERVICE_ACCOUN
  * Fallback para cuando el caption no trae la patente: le pasa la foto entera (auto, calle,
  * fondo) a Google Cloud Vision OCR y busca un patrón de patente en todo el texto que detecte.
  * Reusa la misma Service Account que Sheets (Vision no tiene el problema de cuota de Drive,
- * no crea archivos).
+ * no crea archivos). El caller es responsable de chequear `hasVisionBudget()` antes de llamar
+ * a esta función; acá solo se registra el consumo de una llamada real.
  */
 export async function extractPlateFromImage(buffer: Buffer): Promise<string | null> {
   const [result] = await client.textDetection({ image: { content: buffer } });
+  await recordVisionCall();
   const text = result.fullTextAnnotation?.text ?? '';
   return extractPlate(text);
 }
