@@ -23,7 +23,6 @@ export function registerMessageHandler(sock: WASocket): void {
 async function handleUpsert(sock: WASocket, messages: WAMessage[]): Promise<void> {
   for (const msg of messages) {
     if (msg.key.remoteJid !== env.WHATSAPP_GROUP_JID) continue;
-    if (msg.key.fromMe) continue;
 
     const imageMessage = msg.message?.imageMessage;
     if (!imageMessage) continue;
@@ -37,7 +36,11 @@ async function handleUpsert(sock: WASocket, messages: WAMessage[]): Promise<void
       continue;
     }
 
-    const jugador = msg.pushName || msg.key.participant || msg.key.remoteJid || 'desconocido';
+    // Si la foto la mandó el celu vinculado al bot (fromMe), Baileys no completa pushName ni
+    // participant como en los mensajes de terceros: el nombre sale del perfil de la sesión.
+    const jugador = msg.key.fromMe
+      ? (sock.user?.name ?? 'Vos')
+      : msg.pushName || msg.key.participant || 'desconocido';
     const fechaHora = messageTimestampToIso(msg.messageTimestamp);
 
     logger.info({ jugador, patente }, 'Nueva foto de patente detectada');
