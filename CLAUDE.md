@@ -27,3 +27,8 @@ Se pueden correr juntos con `pnpm verify`. El mismo chequeo corre en CI
 - El acumulado de votos de cada encuesta vive en memoria del proceso (no en Redis). Si el bot
   se reinicia mientras hay una encuesta abierta, se pierden los votos ya emitidos hasta ese
   momento (la encuesta sigue abierta y puede seguir recibiendo votos nuevos).
+- Google Sheets usa una Service Account, pero Google Drive usa OAuth con la cuenta personal del
+  dueño de la carpeta (`src/sheets/driveAuth.ts`, `pnpm get-drive-token`): las service accounts
+  no tienen cuota de almacenamiento propia y no pueden crear archivos en Drive personal
+  (`storageQuotaExceeded`), aunque la carpeta esté compartida con permiso de Editor. Editar un
+  Sheet existente sí funciona con service account porque no crea un archivo nuevo.

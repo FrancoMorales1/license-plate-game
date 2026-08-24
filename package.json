@@ -10,6 +10,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "get-group-jid": "tsx src/scripts/getGroupJid.ts",
+    "get-drive-token": "tsx src/scripts/getDriveToken.ts",
     "typecheck": "tsc --noEmit",
     "build": "pnpm typecheck && tsup src/index.ts --format esm --target node20 --clean --sourcemap",
     "start": "node dist/index.js",

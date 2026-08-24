@@ -1,9 +1,9 @@
 import { Readable } from 'node:stream';
 import { google, type drive_v3 } from 'googleapis';
-import { googleAuth } from './googleAuth.js';
+import { driveOAuthClient } from './driveAuth.js';
 import { env } from '../config/env.js';
 
-const drive: drive_v3.Drive = google.drive({ version: 'v3', auth: googleAuth });
+const drive: drive_v3.Drive = google.drive({ version: 'v3', auth: driveOAuthClient });
 
 export interface UploadedPhoto {
   fileId: string;

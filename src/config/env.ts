@@ -10,6 +10,9 @@ const envSchema = z.object({
     .min(1, 'GOOGLE_SERVICE_ACCOUNT_KEY_PATH es requerido'),
   GOOGLE_SHEET_ID: z.string().min(1, 'GOOGLE_SHEET_ID es requerido'),
   GOOGLE_DRIVE_FOLDER_ID: z.string().min(1, 'GOOGLE_DRIVE_FOLDER_ID es requerido'),
+  GOOGLE_OAUTH_CLIENT_ID: z.string().min(1, 'GOOGLE_OAUTH_CLIENT_ID es requerido'),
+  GOOGLE_OAUTH_CLIENT_SECRET: z.string().min(1, 'GOOGLE_OAUTH_CLIENT_SECRET es requerido'),
+  GOOGLE_OAUTH_REFRESH_TOKEN: z.string().min(1, 'GOOGLE_OAUTH_REFRESH_TOKEN es requerido'),
   POLL_CLOSE_HOURS: z.coerce.number().positive().default(24),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });

@@ -37,39 +37,61 @@ Creá un Google Sheet nuevo con dos hojas (el nombre de la hoja debe ser exactam
 | Jugador | fecha-inicio | fecha-ultima-foto | puntaje total |
 | ------- | ------------ | ----------------- | ------------- |
 
-## 2. Crear la Service Account de Google (gratis)
+## 2. Instalar dependencias y crear el `.env`
+
+```bash
+pnpm install
+cp .env.example .env
+```
+
+El `.env` lo vamos completando en los pasos siguientes.
+
+## 3. Google Cloud: Service Account (Sheets) + OAuth (Drive)
+
+Google no deja que una Service Account suba archivos a una cuenta de Gmail personal: no tiene
+cuota de almacenamiento propia, así que cualquier archivo que cree falla con
+`storageQuotaExceeded` aunque la carpeta sea tuya y esté compartida con permiso de Editor (las
+soluciones oficiales de Google para esto —Shared Drives, domain-wide delegation— requieren
+Google Workspace pago). Por eso acá se usan **dos identidades distintas**: una Service Account
+para editar el Sheet (ahí no hay problema, no crea archivos nuevos) y OAuth con tu cuenta
+personal para subir las fotos a Drive (así el archivo cuenta contra tus 15GB gratis).
 
 1. En [Google Cloud Console](https://console.cloud.google.com/), creá un proyecto.
 2. Habilitá las APIs **Google Sheets API** y **Google Drive API**.
-3. Creá una **Service Account** (IAM y administración → Cuentas de servicio) y generá una clave
-   JSON. Guardá ese archivo como `google-service-account.json` en la raíz del proyecto (está en
-   `.gitignore`, no se sube).
-4. Compartí el Google Sheet del paso 1 con el email de la service account (termina en
-   `...@...iam.gserviceaccount.com`), con permiso de **Editor**.
-5. Creá una carpeta en Google Drive para las fotos y compartila también con ese email, permiso
-   **Editor**. Copiá el ID de la carpeta (está en la URL de la carpeta).
+3. **Service Account** (para el Sheet): IAM y administración → Cuentas de servicio → creá una y
+   generá una clave JSON. Guardala como `google-service-account.json` en la raíz del proyecto
+   (está en `.gitignore`, no se sube). Compartí el Google Sheet del paso 1 con el email de la
+   service account (termina en `...@...iam.gserviceaccount.com`), permiso **Editor**. Copiá el
+   ID del Sheet (está en su URL) a `GOOGLE_SHEET_ID` en `.env`.
+4. **OAuth Client (para Drive)**: APIs y servicios → Credenciales → Crear credenciales → ID de
+   cliente de OAuth → tipo **Aplicación de escritorio** (esto habilita cualquier puerto de
+   `localhost` como redirect URI sin tener que registrarlo). Si te pide configurar la pantalla de
+   consentimiento, elegí External y agregá tu propia cuenta como usuario de prueba (queda en modo
+   "Testing", no hace falta publicarla). Copiá el **Client ID** y el **Client secret** a `.env`
+   (`GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`).
+5. Creá una carpeta en Google Drive para las fotos con tu cuenta normal (no hace falta
+   compartirla con nadie, ya es tuya). Copiá su ID (está en la URL de la carpeta) a
+   `GOOGLE_DRIVE_FOLDER_ID` en `.env`.
+6. Con `GOOGLE_OAUTH_CLIENT_ID`/`SECRET` ya en el `.env`, corré:
 
-## 3. Conseguir el JID del grupo de WhatsApp
+   ```bash
+   pnpm get-drive-token
+   ```
+
+   Abrí la URL que imprime, iniciá sesión con la cuenta dueña de la carpeta del paso 5 y aceptá.
+   El script te va a devolver una línea `GOOGLE_OAUTH_REFRESH_TOKEN=...`: copiala a `.env`.
+
+## 4. Conseguir el JID del grupo de WhatsApp
 
 El JID tiene forma `123456789012345678@g.us`. Corré:
 
 ```bash
-pnpm install
 pnpm get-group-jid
 ```
 
 Escaneá el QR (usa la misma sesión que el bot, guardada en `./auth`) y mandá cualquier mensaje
 al grupo: el script imprime el nombre y el JID de cada grupo del que reciba un mensaje. Copiá el
 JID a `WHATSAPP_GROUP_JID` en `.env`. Cortalo con Ctrl+C cuando lo tengas.
-
-## 4. Configurar el `.env`
-
-```bash
-cp .env.example .env
-```
-
-Completá `WHATSAPP_GROUP_JID`, `GOOGLE_SHEET_ID` (el ID en la URL del Sheet) y
-`GOOGLE_DRIVE_FOLDER_ID`.
 
 ## 5. Correr todo con Docker
 
