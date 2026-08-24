@@ -28,3 +28,11 @@ services:
 
 volumes:
   redis-data:
+
+networks:
+  default:
+    driver_opts:
+      # WSL2 suele exponer eth0 con MTU 1280 hacia internet, pero la red default de Docker
+      # usa 1500: ese mismatch hace que el handshake TLS hacia APIs externas (Google) se
+      # cuelgue en silencio (los paquetes grandes se pierden, sin error ni timeout).
+      com.docker.network.driver.mtu: 1280
