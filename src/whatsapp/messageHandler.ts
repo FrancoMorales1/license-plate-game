@@ -2,6 +2,7 @@ import { downloadMediaMessage, type WAMessage, type WASocket } from '@whiskeysoc
 import { env } from '../config/env.js';
 import { logger } from '../logger.js';
 import { extractPlate } from './plateParser.js';
+import { extractPlateFromImage } from './plateOcr.js';
 import { messageTimestampToIso } from './timestamp.js';
 import { saveMessage } from './messageStore.js';
 import { uploadPhoto } from '../sheets/driveClient.js';
@@ -26,11 +27,22 @@ async function handleUpsert(sock: WASocket, messages: WAMessage[]): Promise<void
     const imageMessage = msg.message?.imageMessage;
     if (!imageMessage) continue;
 
-    const patente = extractPlate(imageMessage.caption ?? '');
+    // Primero se intenta con el caption (rápido, gratis, y sirve para corregir un OCR que
+    // pudiera fallar); si no trae nada reconocible, se baja la foto y se prueba con OCR sobre
+    // la imagen completa.
+    let patente = extractPlate(imageMessage.caption ?? '');
+    let source: 'caption' | 'ocr' = 'caption';
+    const buffer = await downloadMediaMessage(msg, 'buffer', {});
+
+    if (!patente) {
+      patente = await extractPlateFromImage(buffer);
+      source = 'ocr';
+    }
+
     if (!patente) {
       logger.debug(
         { messageId: msg.key.id },
-        'Foto sin patente reconocible en el caption, se ignora',
+        'No se reconoció ninguna patente ni en el caption ni por OCR, se ignora',
       );
       continue;
     }
@@ -42,9 +54,8 @@ async function handleUpsert(sock: WASocket, messages: WAMessage[]): Promise<void
       : msg.pushName || msg.key.participant || 'desconocido';
     const fechaHora = messageTimestampToIso(msg.messageTimestamp);
 
-    logger.info({ jugador, patente }, 'Nueva foto de patente detectada');
+    logger.info({ jugador, patente, source }, 'Nueva foto de patente detectada');
 
-    const buffer = await downloadMediaMessage(msg, 'buffer', {});
     const { viewUrl } = await uploadPhoto(buffer, `${patente}-${fechaHora}.jpg`, 'image/jpeg');
 
     await enqueueSheetJob({ type: 'UPSERT_JUGADOR', data: { jugador, fechaHora } });

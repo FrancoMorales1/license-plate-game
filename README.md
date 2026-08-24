@@ -1,14 +1,17 @@
 # patentes-bot
 
-Bot de WhatsApp para el grupo de patentes: detecta fotos con la patente escrita en el mismo
-mensaje, las guarda en un Google Sheet (con la foto en Google Drive) y les asigna puntaje según
-si esa patente ya se había cargado antes.
+Bot de WhatsApp para el grupo de patentes: detecta fotos de patentes (por texto o por OCR), las
+guarda en un Google Sheet (con la foto en Google Drive) y les asigna puntaje según si esa
+patente ya se había cargado antes.
 
 ## Cómo funciona
 
-1. Alguien manda al grupo una foto con la patente escrita en el mismo mensaje (caption).
-2. El bot reconoce la patente (formato viejo `AAA000` o Mercosur `AA000AA`) y sube la foto a una
-   carpeta de Google Drive.
+1. Alguien manda al grupo una foto de una patente, opcionalmente con la patente escrita en el
+   mismo mensaje (caption).
+2. El bot reconoce la patente (formato viejo `AAA000` o Mercosur `AA000AA`): primero prueba con
+   el caption y, si no hay nada reconocible ahí, baja la foto y prueba con OCR (Google Cloud
+   Vision) sobre la imagen completa. Si ninguno de los dos encuentra una patente, la foto se
+   ignora. Después sube la foto a una carpeta de Google Drive.
 3. Calcula el puntaje comparando contra todo el historial de la hoja **Patentes** (de cualquier
    jugador):
    - Patente nueva (nadie la cargó antes) → **1 punto**.
@@ -51,16 +54,21 @@ cuota de almacenamiento propia, así que cualquier archivo que cree falla con
 `storageQuotaExceeded` aunque la carpeta sea tuya y esté compartida con permiso de Editor (las
 soluciones oficiales de Google para esto —Shared Drives, domain-wide delegation— requieren
 Google Workspace pago). Por eso acá se usan **dos identidades distintas**: una Service Account
-para editar el Sheet (ahí no hay problema, no crea archivos nuevos) y OAuth con tu cuenta
-personal para subir las fotos a Drive (así el archivo cuenta contra tus 15GB gratis).
+para editar el Sheet y para el OCR de Vision (ahí no hay problema, ninguna de las dos crea
+archivos) y OAuth con tu cuenta personal para subir las fotos a Drive (así el archivo cuenta
+contra tus 15GB gratis).
 
-1. En [Google Cloud Console](https://console.cloud.google.com/), creá un proyecto.
-2. Habilitá las APIs **Google Sheets API** y **Google Drive API**.
-3. **Service Account** (para el Sheet): IAM y administración → Cuentas de servicio → creá una y
-   generá una clave JSON. Guardala como `google-service-account.json` en la raíz del proyecto
-   (está en `.gitignore`, no se sube). Compartí el Google Sheet del paso 1 con el email de la
-   service account (termina en `...@...iam.gserviceaccount.com`), permiso **Editor**. Copiá el
-   ID del Sheet (está en su URL) a `GOOGLE_SHEET_ID` en `.env`.
+1. En [Google Cloud Console](https://console.cloud.google.com/), creá un proyecto. Va a pedirte
+   vincular una cuenta de facturación (tarjeta) para poder habilitar las APIs, aunque te quedes
+   dentro de la capa gratuita: Vision OCR tiene 1.000 imágenes gratis por mes, este juego
+   difícilmente las supera.
+2. Habilitá las APIs **Google Sheets API**, **Google Drive API** y **Cloud Vision API**.
+3. **Service Account** (para el Sheet y el OCR): IAM y administración → Cuentas de servicio →
+   creá una y generá una clave JSON. Guardala como `google-service-account.json` en la raíz del
+   proyecto (está en `.gitignore`, no se sube). Compartí el Google Sheet del paso 1 con el email
+   de la service account (termina en `...@...iam.gserviceaccount.com`), permiso **Editor**. Copiá
+   el ID del Sheet (está en su URL) a `GOOGLE_SHEET_ID` en `.env`. Para Vision no hace falta
+   compartir nada más: alcanza con que la API esté habilitada en el proyecto.
 4. **OAuth Client (para Drive)**: APIs y servicios → Credenciales → Crear credenciales → ID de
    cliente de OAuth → tipo **Aplicación de escritorio** (esto habilita cualquier puerto de
    `localhost` como redirect URI sin tener que registrarlo). Si te pide configurar la pantalla de
@@ -118,11 +126,11 @@ pnpm verify   # lint + format + test + build
 ```
 
 Es la misma regla que corre en CI (`.github/workflows/ci.yml`). Ver [CLAUDE.md](./CLAUDE.md)
-para las asunciones de diseño que no estaban especificadas (qué pasa si nadie vota, etc.).
+para las asunciones de diseño que no estaban especificadas.
 
 ## Qué no está cubierto por los tests automáticos
 
 Los tests (`pnpm test`) cubren la lógica pura: parseo de patentes y cálculo del puntaje según
 si la patente es repetida. Lo que requiere credenciales reales hay que probarlo a mano: el
-pairing por QR de WhatsApp, la escritura real en Sheets/Drive, y `docker compose up` con Redis
-real.
+pairing por QR de WhatsApp, la escritura real en Sheets/Drive, la precisión del OCR de Vision
+sobre fotos reales, y `docker compose up` con Redis real.

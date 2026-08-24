@@ -23,6 +23,7 @@
     "verify": "pnpm lint && pnpm format && pnpm test && pnpm build"
   },
   "dependencies": {
+    "@google-cloud/vision": "^6.0.0",
     "@hapi/boom": "^10.0.1",
     "@whiskeysockets/baileys": "7.0.0-rc14",
     "bullmq": "^6.2.0",
