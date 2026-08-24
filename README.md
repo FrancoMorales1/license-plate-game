@@ -51,9 +51,16 @@ Creá un Google Sheet nuevo con dos hojas (el nombre de la hoja debe ser exactam
 
 ## 3. Conseguir el JID del grupo de WhatsApp
 
-El JID tiene forma `123456789012345678@g.us`. La forma más simple: dejá correr el bot una vez
-conectado, mandá cualquier mensaje al grupo, y va a aparecer en los logs el `remoteJid` del
-mensaje (nivel `debug`, poné `LOG_LEVEL=debug` temporalmente). Copialo a `.env`.
+El JID tiene forma `123456789012345678@g.us`. Corré:
+
+```bash
+pnpm install
+pnpm get-group-jid
+```
+
+Escaneá el QR (usa la misma sesión que el bot, guardada en `./auth`) y mandá cualquier mensaje
+al grupo: el script imprime el nombre y el JID de cada grupo del que reciba un mensaje. Copiá el
+JID a `WHATSAPP_GROUP_JID` en `.env`. Cortalo con Ctrl+C cuando lo tengas.
 
 ## 4. Configurar el `.env`
 
