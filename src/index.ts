@@ -2,7 +2,6 @@ import { env } from './config/env.js';
 import { logger } from './logger.js';
 import { createWhatsAppSocket } from './whatsapp/socket.js';
 import { registerMessageHandler } from './whatsapp/messageHandler.js';
-import { registerPollVoteListener } from './whatsapp/pollHandler.js';
 import { cleanupOldMessages } from './whatsapp/messageStore.js';
 import './queue/sheetWorker.js';
 
@@ -13,7 +12,6 @@ async function main(): Promise<void> {
 
   const sock = await createWhatsAppSocket();
   registerMessageHandler(sock);
-  registerPollVoteListener(sock);
 
   setInterval(cleanupOldMessages, CLEANUP_INTERVAL_MS);
 }

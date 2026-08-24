@@ -1,8 +1,8 @@
 # patentes-bot
 
 Bot de WhatsApp (Baileys) que escucha un grupo, detecta fotos de patentes con la patente
-escrita en el caption, las guarda en Google Sheets (subiendo la foto a Google Drive), manda
-una encuesta nativa de WhatsApp para puntuar la foto y guarda el resultado. Las escrituras al
+escrita en el caption, las guarda en Google Sheets (subiendo la foto a Google Drive) y les
+asigna puntaje automáticamente según si la patente ya se había cargado antes. Las escrituras al
 Sheet se serializan con una cola BullMQ (`sheet-writes`, concurrency 1) sobre Redis.
 
 ## Regla del repositorio
@@ -21,12 +21,10 @@ Se pueden correr juntos con `pnpm verify`. El mismo chequeo corre en CI
 
 ## Notas de diseño (asunciones no especificadas por el usuario)
 
-- Si nadie vota una encuesta en `POLL_CLOSE_HOURS`, el puntaje se guarda como `0`.
-- "Votaron todos los miembros del grupo" se calcula como participantes del grupo menos el bot,
-  en el momento de cada voto (no se cachea la lista de miembros).
-- El acumulado de votos de cada encuesta vive en memoria del proceso (no en Redis). Si el bot
-  se reinicia mientras hay una encuesta abierta, se pierden los votos ya emitidos hasta ese
-  momento (la encuesta sigue abierta y puede seguir recibiendo votos nuevos).
+- Puntaje de una patente (`src/sheets/patentesSheet.ts:computePatenteScore`): 1 punto si nadie
+  la cargó antes (comparando contra todo el historial de "Patentes", cualquier jugador), 0.5 si
+  ya la cargó otro jugador, 0 si ya la cargó el mismo jugador (no se puede cobrar dos veces la
+  misma patente). Se calcula en el momento de agregar la fila, no hay encuesta ni votación.
 - Google Sheets usa una Service Account, pero Google Drive usa OAuth con la cuenta personal del
   dueño de la carpeta (`src/sheets/driveAuth.ts`, `pnpm get-drive-token`): las service accounts
   no tienen cuota de almacenamiento propia y no pueden crear archivos en Drive personal

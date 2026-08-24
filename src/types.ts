@@ -2,7 +2,7 @@ export interface PatenteRecord {
   jugador: string;
   fechaHora: string;
   patente: string;
-  puntaje: number | '';
+  puntaje: number;
   foto: string;
 }
 
@@ -11,11 +11,6 @@ export interface JugadorRecord {
   fechaInicio: string;
   fechaUltimaFoto: string;
   puntajeTotal: number;
-}
-
-export interface ScoreOption {
-  label: string;
-  score: number;
 }
 
 export interface AppendPatenteJob {
@@ -36,11 +31,4 @@ export interface UpsertJugadorJob {
   };
 }
 
-export interface ClosePollAndScoreJob {
-  type: 'CLOSE_POLL_AND_SCORE';
-  data: {
-    pollMessageId: string;
-  };
-}
-
-export type SheetJobData = AppendPatenteJob | UpsertJugadorJob | ClosePollAndScoreJob;
+export type SheetJobData = AppendPatenteJob | UpsertJugadorJob;

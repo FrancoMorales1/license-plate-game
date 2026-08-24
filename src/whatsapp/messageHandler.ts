@@ -6,7 +6,6 @@ import { messageTimestampToIso } from './timestamp.js';
 import { saveMessage } from './messageStore.js';
 import { uploadPhoto } from '../sheets/driveClient.js';
 import { enqueueSheetJob } from '../queue/sheetQueue.js';
-import { sendScorePoll } from './pollHandler.js';
 
 export function registerMessageHandler(sock: WASocket): void {
   sock.ev.on('messages.upsert', ({ messages }) => {
@@ -53,7 +52,5 @@ async function handleUpsert(sock: WASocket, messages: WAMessage[]): Promise<void
       type: 'APPEND_PATENTE',
       data: { jugador, fechaHora, patente, foto: viewUrl },
     });
-
-    await sendScorePoll(sock, { jugador, patente, fechaHora, groupJid: env.WHATSAPP_GROUP_JID });
   }
 }

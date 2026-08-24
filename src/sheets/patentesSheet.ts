@@ -1,48 +1,48 @@
-import { appendValues, getValues, updateValues } from './sheetsClient.js';
+import { appendValues, getValues } from './sheetsClient.js';
 
 export const PATENTES_SHEET_NAME = 'Patentes';
 const FIRST_DATA_ROW = 2;
 
-export interface PatenteKey {
-  jugador: string;
-  fechaHora: string;
-  patente: string;
+export const FULL_SCORE = 1;
+const HALF_SCORE = FULL_SCORE / 2;
+
+/**
+ * Puntaje de una patente nueva: si nadie la cargó antes, puntaje completo; si ya la cargó el
+ * mismo jugador, 0 (no se puede cobrar dos veces por la misma patente); si ya la cargó otro
+ * jugador, la mitad.
+ */
+export function computePatenteScore(
+  rows: readonly string[][],
+  jugador: string,
+  patente: string,
+): number {
+  const matches = rows.filter((row) => row[2] === patente);
+  if (matches.length === 0) return FULL_SCORE;
+  if (matches.some((row) => row[0] === jugador)) return 0;
+  return HALF_SCORE;
 }
 
 /**
- * Busca, dentro de las filas de datos de "Patentes" (sin el header), la fila que matchea
- * jugador + fecha-hora + patente. Devuelve el índice dentro de `rows` (0-based) o -1 si no está.
+ * Lee el historial de "Patentes", calcula el puntaje de esta patente para este jugador y
+ * agrega la fila ya con el puntaje final. Devuelve el puntaje para poder sumarlo al acumulado
+ * del jugador.
  */
-export function findPatenteRowIndex(rows: readonly string[][], key: PatenteKey): number {
-  return rows.findIndex(
-    (row) => row[0] === key.jugador && row[1] === key.fechaHora && row[2] === key.patente,
-  );
-}
-
-export async function appendPatenteRow(data: {
+export async function recordPatente(data: {
   jugador: string;
   fechaHora: string;
   patente: string;
   foto: string;
-}): Promise<void> {
+}): Promise<number> {
+  const rows = await getValues(`${PATENTES_SHEET_NAME}!A${FIRST_DATA_ROW}:E`);
+  const puntaje = computePatenteScore(rows, data.jugador, data.patente);
+
   await appendValues(`${PATENTES_SHEET_NAME}!A:E`, [
     data.jugador,
     data.fechaHora,
     data.patente,
-    '',
+    puntaje,
     data.foto,
   ]);
-}
 
-export async function setPuntajeForRow(key: PatenteKey & { puntaje: number }): Promise<void> {
-  const rows = await getValues(`${PATENTES_SHEET_NAME}!A${FIRST_DATA_ROW}:E`);
-  const index = findPatenteRowIndex(rows, key);
-  if (index === -1) {
-    throw new Error(
-      `No se encontró en "Patentes" la fila de ${key.jugador} / ${key.patente} / ${key.fechaHora} para actualizar el puntaje`,
-    );
-  }
-
-  const sheetRow = index + FIRST_DATA_ROW;
-  await updateValues(`${PATENTES_SHEET_NAME}!D${sheetRow}`, [key.puntaje]);
+  return puntaje;
 }

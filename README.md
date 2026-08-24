@@ -1,27 +1,25 @@
 # patentes-bot
 
 Bot de WhatsApp para el grupo de patentes: detecta fotos con la patente escrita en el mismo
-mensaje, las guarda en un Google Sheet (con la foto en Google Drive), manda una encuesta para
-puntuar la foto y guarda el resultado final cuando la encuesta cierra.
+mensaje, las guarda en un Google Sheet (con la foto en Google Drive) y les asigna puntaje según
+si esa patente ya se había cargado antes.
 
 ## Cómo funciona
 
 1. Alguien manda al grupo una foto con la patente escrita en el mismo mensaje (caption).
-2. El bot reconoce la patente (formato viejo `AAA000` o Mercosur `AA000AA`), sube la foto a una
-   carpeta de Google Drive y agrega una fila en la hoja **Patentes** (puntaje vacío todavía).
-3. El bot manda una encuesta al grupo con 4 opciones fijas:
-   - `10 - Palabra exacta`
-   - `3 - Palabra similar e insulto`
-   - `2 - Palabra similar y random`
-   - `1 - Patente random`
-4. La encuesta cierra a las `POLL_CLOSE_HOURS` horas (default 24), o antes si vota todo el
-   grupo. El puntaje final es el de la opción más votada; si hay empate, se promedian los
-   puntajes de las opciones empatadas.
-5. El puntaje se escribe en la fila correspondiente de **Patentes** y se suma al acumulado del
-   jugador en **Jugadores**.
+2. El bot reconoce la patente (formato viejo `AAA000` o Mercosur `AA000AA`) y sube la foto a una
+   carpeta de Google Drive.
+3. Calcula el puntaje comparando contra todo el historial de la hoja **Patentes** (de cualquier
+   jugador):
+   - Patente nueva (nadie la cargó antes) → **1 punto**.
+   - Ya la cargó otro jugador → **0.5** (medio punto).
+   - Ya la cargó el mismo jugador antes → **0** (no se puede cobrar dos veces la misma patente).
+4. Agrega la fila en **Patentes** con el puntaje ya calculado y lo suma al acumulado del jugador
+   en **Jugadores**.
 
 Todas las escrituras al Sheet pasan por una única cola de BullMQ (`sheet-writes`) con un solo
-worker (`concurrency: 1`), así nunca hay dos escrituras al mismo tiempo.
+worker (`concurrency: 1`): esto es lo que garantiza que el cálculo de "¿ya existe esta patente?"
+sea correcto incluso si dos fotos llegan casi al mismo tiempo.
 
 ## 1. Preparar el Google Sheet
 
@@ -124,7 +122,7 @@ para las asunciones de diseño que no estaban especificadas (qué pasa si nadie 
 
 ## Qué no está cubierto por los tests automáticos
 
-Los tests (`pnpm test`) cubren la lógica pura: parseo de patentes, cálculo del puntaje ganador
-y el matching de filas en el Sheet. Lo que requiere credenciales reales hay que probarlo a mano:
-el pairing por QR de WhatsApp, la escritura real en Sheets/Drive, y `docker compose up` con
-Redis real.
+Los tests (`pnpm test`) cubren la lógica pura: parseo de patentes y cálculo del puntaje según
+si la patente es repetida. Lo que requiere credenciales reales hay que probarlo a mano: el
+pairing por QR de WhatsApp, la escritura real en Sheets/Drive, y `docker compose up` con Redis
+real.
