@@ -27,6 +27,23 @@ describe('extractPlate', () => {
     expect(extractPlate('ABC123 anda re al pedo')).toBe('ABC123');
   });
 
+  it('detecta el formato Mercosur moto (A000AAA)', () => {
+    expect(extractPlate('A198SYB')).toBe('A198SYB');
+  });
+
+  it('detecta el formato Mercosur moto en minúsculas dentro de una frase', () => {
+    expect(extractPlate('mirá la moto a198syb que pasó')).toBe('A198SYB');
+  });
+
+  it('detecta el formato Mercosur moto con separadores', () => {
+    expect(extractPlate('A-198-SYB')).toBe('A198SYB');
+    expect(extractPlate('A 198 SYB')).toBe('A198SYB');
+  });
+
+  it('detecta el formato Mercosur moto cuando el OCR la parte en dos líneas a mitad de los números', () => {
+    expect(extractPlate('MERCOSUR\nREPÚBLICA ARGENTINA\nA19\n8SYB')).toBe('A198SYB');
+  });
+
   it('devuelve null si no hay ninguna patente', () => {
     expect(extractPlate('no hay patente en este texto')).toBeNull();
   });

@@ -44,3 +44,7 @@ Se pueden correr juntos con `pnpm verify`. El mismo chequeo corre en CI
   se corta _solo_ el fallback de OCR -las fotos con la patente escrita en el caption siguen
   funcionando igual, no consumen Vision- y se manda un único aviso al grupo por mes (no uno por
   cada foto bloqueada). Si se borra el volumen de Redis el contador se resetea.
+- Patente de moto Mercosur (`src/whatsapp/plateParser.ts`, formato A000AAA): el separador
+  opcional va entre cada carácter individual, no solo entre los grupos letra/números/letras,
+  porque la chapa suele estar en dos líneas y el salto de línea que detecta el OCR puede caer en
+  cualquier punto (incluso en el medio del bloque de números, ej. `A19\n8SYB`).
