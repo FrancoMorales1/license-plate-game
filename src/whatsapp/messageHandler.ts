@@ -4,6 +4,8 @@ import { logger } from '../logger.js';
 import { extractPlate } from './plateParser.js';
 import { extractPlateFromImage } from './plateOcr.js';
 import { hasVisionBudget, claimLimitNotice } from './visionBudget.js';
+import { hashImage } from './imageHash.js';
+import { claimImage } from './imageDedup.js';
 import { messageTimestampToIso } from './timestamp.js';
 import { saveMessage } from './messageStore.js';
 import { uploadPhoto } from '../sheets/driveClient.js';
@@ -28,12 +30,20 @@ async function handleUpsert(sock: WASocket, messages: WAMessage[]): Promise<void
     const imageMessage = msg.message?.imageMessage;
     if (!imageMessage) continue;
 
+    const buffer = await downloadMediaMessage(msg, 'buffer', {});
+
+    // Se descarta por hash antes de gastar OCR/Drive en una foto ya procesada (reenvíos,
+    // duplicados por reconexión de WhatsApp, etc.).
+    const isNewImage = await claimImage(hashImage(buffer));
+    if (!isNewImage) {
+      logger.debug({ messageId: msg.key.id }, 'Imagen ya procesada antes (mismo hash), se ignora');
+      continue;
+    }
+
     // Primero se intenta con el caption (rápido, gratis, y sirve para corregir un OCR que
-    // pudiera fallar); si no trae nada reconocible, se baja la foto y se prueba con OCR sobre
-    // la imagen completa.
+    // pudiera fallar); si no trae nada reconocible, se prueba con OCR sobre la imagen completa.
     let patente = extractPlate(imageMessage.caption ?? '');
     let source: 'caption' | 'ocr' = 'caption';
-    const buffer = await downloadMediaMessage(msg, 'buffer', {});
 
     if (!patente) {
       if (await hasVisionBudget()) {

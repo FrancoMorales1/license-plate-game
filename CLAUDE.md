@@ -48,3 +48,9 @@ Se pueden correr juntos con `pnpm verify`. El mismo chequeo corre en CI
   opcional va entre cada carácter individual, no solo entre los grupos letra/números/letras,
   porque la chapa suele estar en dos líneas y el salto de línea que detecta el OCR puede caer en
   cualquier punto (incluso en el medio del bloque de números, ej. `A19\n8SYB`).
+- Deduplicado de imágenes (`src/whatsapp/imageHash.ts` + `imageDedup.ts`): se calcula un SHA-256
+  del buffer completo de la foto y se registra en un Redis Set (`SADD`, atómico, sin TTL) antes
+  de intentar caption/OCR. Si el hash ya estaba, se ignora la foto entera sin gastar Vision ni
+  subir de nuevo a Drive. El hash se separó de la lógica que toca Redis
+  (`imageHash.ts` es puro y tiene tests; `imageDedup.ts` no, mismo criterio que
+  `visionBudget.ts`) para no arrastrar una conexión real a Redis en los tests.
