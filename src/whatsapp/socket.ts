@@ -10,6 +10,7 @@ import { Boom } from '@hapi/boom';
 import { env } from '../config/env.js';
 import { logger } from '../logger.js';
 import { getStoredMessage } from './messageStore.js';
+import { registerMessageHandler } from './messageHandler.js';
 
 export async function createWhatsAppSocket(): Promise<WASocket> {
   const { state, saveCreds } = await useMultiFileAuthState(env.WHATSAPP_AUTH_DIR);
@@ -26,6 +27,7 @@ export async function createWhatsAppSocket(): Promise<WASocket> {
   });
 
   sock.ev.on('creds.update', saveCreds);
+  registerMessageHandler(sock);
 
   sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect, qr } = update;
