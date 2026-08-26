@@ -54,3 +54,10 @@ Se pueden correr juntos con `pnpm verify`. El mismo chequeo corre en CI
   subir de nuevo a Drive. El hash se separó de la lógica que toca Redis
   (`imageHash.ts` es puro y tiene tests; `imageDedup.ts` no, mismo criterio que
   `visionBudget.ts`) para no arrastrar una conexión real a Redis en los tests.
+- Puntaje total de "Jugadores" (`src/sheets/jugadoresSheet.ts`): no lo calcula ni lo escribe la
+  app. Al crear la fila de un jugador nuevo, la columna D se completa con la fórmula
+  `=SUMIF(Patentes!A:A;INDIRECT("A"&ROW());Patentes!D:D)` (vía `valueInputOption: USER_ENTERED`),
+  que suma en vivo todas sus filas en "Patentes". `INDIRECT("A"&ROW())` evita tener que saber de
+  antemano en qué fila queda el `append`. El separador de argumentos es `;` porque el Sheet tiene
+  locale `es_ES` (usa `,` como separador decimal, no de argumentos). Filas creadas antes de este
+  cambio necesitan que alguien pegue la fórmula a mano una vez en su celda de la columna D.

@@ -4,7 +4,7 @@ import { SHEET_QUEUE_NAME } from './sheetQueue.js';
 import { logger } from '../logger.js';
 import type { SheetJobData } from '../types.js';
 import { recordPatente } from '../sheets/patentesSheet.js';
-import { upsertJugador, addPuntajeToJugador } from '../sheets/jugadoresSheet.js';
+import { upsertJugador } from '../sheets/jugadoresSheet.js';
 
 async function process(job: Job<SheetJobData>): Promise<void> {
   const { data } = job;
@@ -14,11 +14,9 @@ async function process(job: Job<SheetJobData>): Promise<void> {
       await upsertJugador(data.data);
       return;
 
-    case 'APPEND_PATENTE': {
-      const puntaje = await recordPatente(data.data);
-      await addPuntajeToJugador({ jugador: data.data.jugador, puntaje });
+    case 'APPEND_PATENTE':
+      await recordPatente(data.data);
       return;
-    }
   }
 }
 

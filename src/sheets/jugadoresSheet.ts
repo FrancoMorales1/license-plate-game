@@ -11,6 +11,12 @@ export function findJugadorRowIndex(rows: readonly string[][], jugador: string):
   return rows.findIndex((row) => row[0] === jugador);
 }
 
+// El total no lo calcula la app: es una fórmula de Sheet que suma, para el jugador de esa
+// misma fila, todas sus filas en "Patentes". INDIRECT("A"&ROW()) apunta a la columna Jugador de
+// la propia fila sin necesitar saber de antemano en qué fila va a quedar el append. El Sheet
+// tiene locale es_ES, que usa ";" como separador de argumentos (no ",").
+const PUNTAJE_TOTAL_FORMULA = '=SUMIF(Patentes!A:A;INDIRECT("A"&ROW());Patentes!D:D)';
+
 export async function upsertJugador(data: { jugador: string; fechaHora: string }): Promise<void> {
   const rows = await getValues(`${JUGADORES_SHEET_NAME}!A${FIRST_DATA_ROW}:D`);
   const index = findJugadorRowIndex(rows, data.jugador);
@@ -20,27 +26,11 @@ export async function upsertJugador(data: { jugador: string; fechaHora: string }
       data.jugador,
       data.fechaHora,
       data.fechaHora,
-      0,
+      PUNTAJE_TOTAL_FORMULA,
     ]);
     return;
   }
 
   const sheetRow = index + FIRST_DATA_ROW;
   await updateValues(`${JUGADORES_SHEET_NAME}!C${sheetRow}`, [data.fechaHora]);
-}
-
-export async function addPuntajeToJugador(data: {
-  jugador: string;
-  puntaje: number;
-}): Promise<void> {
-  const rows = await getValues(`${JUGADORES_SHEET_NAME}!A${FIRST_DATA_ROW}:D`);
-  const index = findJugadorRowIndex(rows, data.jugador);
-
-  if (index === -1) {
-    throw new Error(`No se encontró a ${data.jugador} en "Jugadores" para sumarle el puntaje`);
-  }
-
-  const sheetRow = index + FIRST_DATA_ROW;
-  const currentTotal = Number(rows[index]?.[3] ?? 0) || 0;
-  await updateValues(`${JUGADORES_SHEET_NAME}!D${sheetRow}`, [currentTotal + data.puntaje]);
 }

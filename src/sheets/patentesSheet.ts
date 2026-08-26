@@ -24,15 +24,15 @@ export function computePatenteScore(
 
 /**
  * Lee el historial de "Patentes", calcula el puntaje de esta patente para este jugador y
- * agrega la fila ya con el puntaje final. Devuelve el puntaje para poder sumarlo al acumulado
- * del jugador.
+ * agrega la fila ya con el puntaje final. El acumulado en "Jugadores" no lo escribe la app: es
+ * una fórmula de Sheet que suma esta columna (ver PUNTAJE_TOTAL_FORMULA en jugadoresSheet.ts).
  */
 export async function recordPatente(data: {
   jugador: string;
   fechaHora: string;
   patente: string;
   foto: string;
-}): Promise<number> {
+}): Promise<void> {
   const rows = await getValues(`${PATENTES_SHEET_NAME}!A${FIRST_DATA_ROW}:E`);
   const puntaje = computePatenteScore(rows, data.jugador, data.patente);
 
@@ -43,6 +43,4 @@ export async function recordPatente(data: {
     puntaje,
     data.foto,
   ]);
-
-  return puntaje;
 }
