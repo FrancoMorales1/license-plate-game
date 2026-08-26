@@ -12,6 +12,17 @@ import { logger } from '../logger.js';
 import { getStoredMessage } from './messageStore.js';
 import { registerMessageHandler } from './messageHandler.js';
 
+let activeSock: WASocket | undefined;
+
+/**
+ * El socket activo, para poder mandar mensajes (ej. reacciones) desde fuera del flujo de
+ * `messages.upsert` (como el worker de Sheets). Se reasigna en cada reconexión, así que siempre
+ * devuelve el socket vigente en vez de uno posiblemente cerrado.
+ */
+export function getActiveSock(): WASocket | undefined {
+  return activeSock;
+}
+
 export async function createWhatsAppSocket(): Promise<WASocket> {
   const { state, saveCreds } = await useMultiFileAuthState(env.WHATSAPP_AUTH_DIR);
   const { version } = await fetchLatestBaileysVersion();
@@ -26,6 +37,7 @@ export async function createWhatsAppSocket(): Promise<WASocket> {
     getMessage: async (key) => getStoredMessage(key.id),
   });
 
+  activeSock = sock;
   sock.ev.on('creds.update', saveCreds);
   registerMessageHandler(sock);
 

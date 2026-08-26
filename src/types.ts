@@ -1,3 +1,5 @@
+import type { WAMessageKey } from '@whiskeysockets/baileys';
+
 export interface PatenteRecord {
   jugador: string;
   fechaHora: string;
@@ -20,6 +22,7 @@ export interface AppendPatenteJob {
     fechaHora: string;
     patente: string;
     foto: string;
+    messageKey: WAMessageKey;
   };
 }
 

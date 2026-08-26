@@ -84,7 +84,7 @@ async function handleUpsert(sock: WASocket, messages: WAMessage[]): Promise<void
     await enqueueSheetJob({ type: 'UPSERT_JUGADOR', data: { jugador, fechaHora } });
     await enqueueSheetJob({
       type: 'APPEND_PATENTE',
-      data: { jugador, fechaHora, patente, foto: viewUrl },
+      data: { jugador, fechaHora, patente, foto: viewUrl, messageKey: msg.key },
     });
   }
 }
